@@ -23,6 +23,8 @@ FONT = pygame.font.SysFont('Impact', 90)
 # end fonts
 clock = pygame.time.Clock()
 ###END INITIALIZE
+def move_camera(x, y, z):
+    glTranslate(x, y, z)
 
 def draw_shape(edges, vertices):
     glBegin(GL_LINES) #Start drawing/making shaped
@@ -31,15 +33,27 @@ def draw_shape(edges, vertices):
             glVertex(vertices[vertex]) #Sets the vertexes from edges list
     glEnd() #Done making shapes
 
-def move_shape(vertice_list, mouse_x, mouse_y, back_vertice_list):
+def move_shape(numerate):
+    file_xy_read = open("store_x_y", "r")
+    file_xy_write = open("store_x_y", "a")
+    print(str(numerate))
+    old_x, old_y = 960, 540
+    x, y = pygame.mouse.get_pos()
 
+    if numerate > 1:
+        string1, string2 = file_xy_read.readlines()
 
-    center = [(mouse_x-960)/220, (540-mouse_y)/160, 0]
-    print(center)
-    for i in range(len(vertice_list)):
-        for j in range(len(vertice_list[i])):
+        old_x, old_y = float(string1), float(string2)
+        print(old_x, old_y)
 
-            vertice_list[i][j] = center[j] + back_vertice_list[i][j]
+    # FIND DIFFERENCE BETWEEN CURRENT COORDINATES AND PAST COORDINATES TO DECIDE TRANSLATION DISTANCE THAT FITS CURSOR
+    glTranslatef(x / 460 - old_x / 460, -y / 300 - -old_y / 300, 0)
+    # SAVE COORDINATES BEFORE
+    clear = open("store_x_y", "w")
+    file_xy_write.write(str(x))
+    file_xy_write.write("\n" + str(y))
+    file_xy_write.close()
+    file_xy_read.close()
 """
 GAME BUTTON CLASS
 """
@@ -77,7 +91,11 @@ def menu():
     """
     Creating a digestable game menu where the user can select the 3d playground of their choice
     """
-
+    #REPEAT SCREEN INITIALIZATION, NEEDED TO MOVE FROM 3D GAMEMODES BACK TO MENU
+    pygame.init()
+    WIDTH, HEIGHT = 1920, 1080
+    screen = pygame.display.set_mode((WIDTH, HEIGHT))
+    #END REPEAT INITIALIZATION
     # Make Buttons Rect
     diamond_button = GameButton(220, 250, 400, 500, "Play With a Diamond")
     cube_button = GameButton(760, 250, 400, 500, "Play With a Cube")
@@ -147,6 +165,15 @@ def menu():
 def diamond_playground():
     """
     Displays the full playground game mode for the diamond
+    The diamond is red and is see through, none of its faces are filled in
+    User can press keys to play with diamond:
+    1 = grow
+    2 = shrink
+    3 = spin right
+    4 = spin left
+    Return = stop scaling and rotation
+    Click on screen = cube moves to click location (depends on rotation)
+    R = return to menu
     """
     ###3D INITIALIZING###
     pygame.display.set_mode((WIDTH, HEIGHT), DOUBLEBUF|OPENGL) #Double buffering visuals and enable OpenGl to run in pygame window
@@ -180,7 +207,7 @@ def diamond_playground():
     ]
     ###END SHAPE CHARACTERISTICS###
 
-
+    numerate = 0
     scale = 1 #No Scaling Base Variable
     rotate = 0 # Slow Rotation Base variable (CHANGE THIS TO NO ROTATION?)
     while True:
@@ -189,9 +216,8 @@ def diamond_playground():
                 pygame.quit()
                 quit()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                draw_shape(edges_diamond, vertices_diamond)
-                x, y = pygame.mouse.get_pos()
-                move_shape(vertices_diamond, x, y, backup_vertices_diamond)
+                numerate += 1
+                move_shape(numerate)
 
         if pygame.key.get_pressed()[K_1]:
             scale += .001
@@ -204,18 +230,30 @@ def diamond_playground():
             rotate += .1
         if pygame.key.get_pressed()[K_4]:
             rotate -= .1
+        if pygame.key.get_pressed()[K_r]:
+            menu()
 
 
         glRotatef(rotate, 0, 1, 0)
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
         glScalef(scale, scale, scale)
+        glColor(1, 0, 0)
         draw_shape(edges_diamond, vertices_diamond)
         pygame.display.flip()
         clock.tick(60)
 ###CUBE MODE###
 def cube_playground():
     """
-    Displays the full playground game mode for the cube
+    Displays the full playground game mode for the cube:
+    The cube will be see through, no faces will be filled in
+    User can press keys to play with cube:
+    1 = grow
+    2 = shrink
+    3 = spin right
+    4 = spin left
+    Return = stop scaling and rotation
+    Click on screen = cube moves to click location (depends on rotation)
+    R = return to menu
     """
     ###3D INITIALIZING###
     pygame.display.set_mode((WIDTH, HEIGHT), DOUBLEBUF|OPENGL) #Double buffering visuals and enable OpenGl to run in pygame window
@@ -236,18 +274,7 @@ def cube_playground():
         [-0.5, 0.5, 0.5],
 
     ]
-    backup_vertices_cube= [
-        [0.5, -0.5, 0.5],
-        [0.5, -0.5, -0.5],
-        [-0.5, -0.5, -0.5],
-        [-0.5, -0.5, 0.5],
-        [0.5, 0.5, 0.5],
-        [0.5, 0.5, -0.5],
-        [-0.5, 0.5, -0.5],
-        [-0.5, 0.5, 0.5],
-
-    ]
-    # EDGES OF CUBE (each number isa  vertex)
+    # EDGES OF CUBE (each number is a vertex)
     edges_cube = [
         (0, 1), (1, 2), (2, 3), (3, 0),  # Bottom Square
         (4, 5), (5, 6), (6, 7), (7, 4),  #Top Square
@@ -255,18 +282,17 @@ def cube_playground():
     ]
     ###END SHAPE CHARACTERISTICS###
 
-
+    numerate = 0 #for movement function
     scale = 1 #No Scaling Base Variable
-    rotate = 0 # Slow Rotation Base variable (CHANGE THIS TO NO ROTATION?)
+    rotate = 0 # No rotation base variable
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
             if event.type == pygame.MOUSEBUTTONDOWN:
-                draw_shape(edges_cube, vertices_cube)
-                x, y = pygame.mouse.get_pos()
-                move_shape(vertices_cube, x, y, backup_vertices_cube)
+                numerate += 1
+                move_shape(numerate)
         if pygame.key.get_pressed()[K_1]:
             scale += .001
         if pygame.key.get_pressed()[K_2]:
@@ -278,11 +304,14 @@ def cube_playground():
             rotate += .1
         if pygame.key.get_pressed()[K_4]:
             rotate -= .1
+        if pygame.key.get_pressed()[K_r]:
+            menu()
 
 
         glRotatef(rotate, 0, 1, 0)
         glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT)
         glScalef(scale, scale, scale)
+        glColor(0,0,1)
         draw_shape(edges_cube, vertices_cube)
         pygame.display.flip()
         clock.tick(60)
@@ -290,68 +319,111 @@ def cube_playground():
     ###SPHERE MODE###
 def sphere_playground():
     """
-    Displays the full playground game mode for the cube
+    Displays the full playground game mode for the sphere
+    The sphere is made up of four quadrants, one being blue, then red, then green, then purple
+    The user cannot see through this shape as they can with the diamond and cube
+    User can press keys to play with sphere:
+    1 = grow
+    2 = shrink
+    3 = spin right
+    4 = spin left
+    Return = stop scaling and rotation
+    Click on screen = cube moves to click location (depends on rotation)
+    R = return to menu
     """
     ###3D INITIALIZING###
     pygame.display.set_mode((WIDTH, HEIGHT),DOUBLEBUF | OPENGL)  # Double buffering visuals and enable OpenGl to run in pygame window
-
+    ##SET UP SCREEN FOR 3D
     gluPerspective(45, ((WIDTH, HEIGHT)[0] / (WIDTH, HEIGHT)[1]), 0.1, 50.0)
     glTranslatef(0.0, 0.0, -5)
 
+    #CREATE QUADRIC FOR SPHERE
     quadrie = gluNewQuadric()
     gluQuadricDrawStyle(quadrie, GLU_FILL)
     gluQuadricNormals(quadrie, GL_SMOOTH)
 
+    #INITIALizE GRAPHICS
+    glEnable(GL_DEPTH_TEST) #DEPTH TEST FIXED EVERYTHING THANK THE HEAVENS. MAKES IT TO THAT SPHERE VISUALLY ROTATES
+    glEnable(GL_LIGHTING) #CREATE LIGHTING
+    glEnable(GL_LIGHT0)
+    glLightfv(GL_LIGHT0, GL_AMBIENT, (.5, .5, .5, 1.0)) #MAKE LIGHTING BRIGHT AND TOUCH ALL PARTS OF SPHERE FOR BEST VISION
+    glEnable(GL_COLOR_MATERIAL) #CREATE MATERIAL SO THAT LIGHT SHOWS OFF COLOR
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE)
 
     scale = 1  # No Scaling Base Variable
     rotate = 0  # Slow Rotation Base variable (CHANGE THIS TO NO ROTATION?)
-    numerate = 0
+    numerate = 0 #Find number of times mouse is clicked for movement
+    ### START GRAPHICS LOOP ###
     while True:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
-            ### DIFFICULT MOVEMENT FOR SPHERE###
+            ###MOVE SPHERE TO WHERE USER PRESSES###
             if event.type == pygame.MOUSEBUTTONDOWN:
-                file_xy_read = open("store_x_y", "r")
-                file_xy_write = open("store_x_y", "w")
+                # MOVEMENT WILL BE MESSED UP IF USER STARTS ROTATION
                 numerate += 1
-                old_x, old_y = 960, 540
-                x, y = pygame.mouse.get_pos()
-                print(x, y)
-                if numerate >= 2:
-                    string1, string2 = file_xy_read.readlines()
-                    old_x, old_y = float(string1), float(string2)
-                    print(old_x, old_y)
-                    ex, why = ((old_x-960)/460), ((old_y-540)/300)
+                move_shape(numerate)
 
-                #FIND DIFFERENCE BETWEEN CURRENT COORDINATES AND PAST COORDINATES TO DECIDE TRANSLATION DISTANCE THAT FITS CURSOR
-                glTranslatef(x/460 - old_x/460, -y/300 - -old_y/300, 0)
-                #SAVE COORDINATES BEFORE
-                file_xy_write.write(str(x))
-                file_xy_write.write("\n" + str(y))
-
-        if pygame.key.get_pressed()[K_1]:
+        if pygame.key.get_pressed()[K_1]: #1 to scale up
             scale += .001
-        if pygame.key.get_pressed()[K_2]:
+        elif pygame.key.get_pressed()[K_2]: #2 to shrink
             scale -= .001
-        if pygame.key.get_pressed()[K_RETURN]:
+        elif pygame.key.get_pressed()[K_RETURN]: #Enter to pause scale and rotation
             scale = 1
             rotate = 0
-        if pygame.key.get_pressed()[K_3]:
+        elif pygame.key.get_pressed()[K_3]: #3 to rotate right
             rotate += .1
-        if pygame.key.get_pressed()[K_4]:
+        elif pygame.key.get_pressed()[K_4]: #4 to rotate left
             rotate -= .1
+        if pygame.key.get_pressed()[K_r]: #r to return to the menu
+            menu()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT)
-        glColor3f(0.2, 0.01, .01)
-        #SPHERE
-        gluSphere(quadrie, 1, 32, 32)
-        glVertex(0, 0,1 * scale)
+        ### DRAWING SPHERE ###
+        #RED SEMI
         glRotatef(rotate, 0, 1, 0)
-        glScalef(scale, scale, scale)
+        glEnable(GL_CLIP_PLANE0) #ENABLE CLIP PLANE
+        glEnable(GL_CLIP_PLANE1)
+
+        glClipPlane(GL_CLIP_PLANE0, (0,0,1,0)) #Cut sphere in half
+        glClipPlane(GL_CLIP_PLANE1, (-1, 0, 0, 0)) #Cut sphere into a quarter
+        glColor3f(.9, 0.0, 0.0)
+        gluSphere(quadrie, 1, 50, 50) #Creates sphere, only hemisphere because cut by clip plane
+        glDisable(GL_CLIP_PLANE0) #DISABLE PLANE
+        glDisable(GL_CLIP_PLANE1)
+        #BLUE SEMI
+        glEnable(GL_CLIP_PLANE0) #ENABLE CLIP PLANE
+        glEnable(GL_CLIP_PLANE1)
+        glClipPlane(GL_CLIP_PLANE0, (0,0,-1,0)) #CLIP IN HALF
+        glClipPlane(GL_CLIP_PLANE1, (1, 0, 0, 0)) #CLIP IN HALF AGAIN
+        glColor3f(0, 0.0, 1)
+        gluSphere(quadrie, 1, 50, 50) #Create sphere
+        glDisable(GL_CLIP_PLANE0) #DISABLE PLANE
+        glDisable(GL_CLIP_PLANE1)
+        #GREEN QUART
+        glEnable(GL_CLIP_PLANE0) #ENABLE CLIP PLANE
+        glEnable(GL_CLIP_PLANE1)
+        glClipPlane(GL_CLIP_PLANE0, (0,0,-1,0)) #CLIP IN HALF
+        glClipPlane(GL_CLIP_PLANE1, (-1,0,0,1)) #CLIP FIRST HALF IN HALF
+        glColor3f(0, 1, 0)
+        gluSphere(quadrie, 1, 50, 50) #Create sphere
+        glDisable(GL_CLIP_PLANE0) #DISABLE PLANE
+        glDisable(GL_CLIP_PLANE1)
+        #PURP QUART
+        glEnable(GL_CLIP_PLANE0) #ENABLE CLIP PLANE
+        glEnable(GL_CLIP_PLANE1)
+        glClipPlane(GL_CLIP_PLANE0, (0,0,1,0)) #CLIP IN HALF
+        glClipPlane(GL_CLIP_PLANE1, (1,0 ,0,0)) # CLIP IN HALF AGAIN FOR QUARTER
+        glColor3f(.7, .3, 1)
+        gluSphere(quadrie, 1, 50, 50) #Create sphere
+        glDisable(GL_CLIP_PLANE0) #DISABLE PLANE
+        glDisable(GL_CLIP_PLANE1)
+
+        #END SPHERE
+        glScalef(scale, scale, scale) #Change scale based on user inputs from before
         pygame.display.flip()
-        clock.tick(60) 
+        clock.tick(60)
 def main():
     menu()
 
