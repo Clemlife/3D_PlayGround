@@ -73,7 +73,7 @@ class GameButton:
         self.description = description
 
         self.image = pygame.Surface([self.width, self.height])
-        self.image.fill((0, 0, 255))
+        self.image.fill((0, 0, 100))
         self.rect = self.image.get_rect()
         self.rect.center = (self.butt_x + (width / 2), self.butt_y + (height / 2))
 
@@ -86,7 +86,7 @@ class GameButton:
             screen.blit(text_surface, (rect_text))
         ### BASE EFFECT
         if self.hover == False:
-            pygame.draw.rect(screen, (0, 0, 255), self.rect)
+            pygame.draw.rect(screen, (200, 0, 0), self.rect)
 
 def draw_sphere(quadrie):
     """
@@ -188,8 +188,8 @@ def menu():
         for mode in mode_rects:
             mode.draw()
         ###ADD FLAIR TO TITLE###
-        pygame.draw.circle(screen, (0, 0, 0), (600, 130), 20)
-        pygame.draw.circle(screen, (0, 0, 0), (1320, 130), 20)
+        pygame.draw.circle(screen, (255, 0, 0), (600, 130), 20)
+        pygame.draw.circle(screen, (255, 0, 0), (1320, 130), 20)
 
         """
         TEXT START
@@ -204,8 +204,8 @@ def menu():
         text_surface = FONT.render('SPHERE', False, (255, 255, 255))
         screen.blit(text_surface, (1370, 460))
         # TITLE
-        text_surface = FONT.render('3D PLAYGROUND', True, (0, 0, 0))
-        screen.blit(text_surface, (640, 80))
+        text_surface = FONT.render('3D PLAYGROUND', True, (255, 0, 0))
+        screen.blit(text_surface, (680, 80))
         """
         TEXT END
         """
