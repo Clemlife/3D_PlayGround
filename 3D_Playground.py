@@ -25,6 +25,7 @@ def draw_shape(edges, vertices):
     """
     Draws shape in space based on edges and vertices
     only used for pyramid and cube
+    params: edges of shape and vertices of shape
     """
 
     glBegin(GL_LINES) #Start drawing/making shaped
@@ -36,6 +37,7 @@ def draw_shape(edges, vertices):
 def move_shape(numerate):
     """
     Moves shape to location of mouse press
+    params: numerate = number of mouse clicks
     """
     #OPEN FILES TO SAVE OLD CLICK LOCATIONS
     file_xy_read = open("store_x_y", "r")
@@ -86,7 +88,7 @@ class GameButton:
             screen.blit(text_surface, (rect_text))
         ### BASE EFFECT
         if self.hover == False:
-            pygame.draw.rect(screen, (200, 0, 0), self.rect)
+            pygame.draw.rect(screen, (200, 0, 0), self.rect) #base color and rect
 
 def draw_sphere(quadrie):
     """
